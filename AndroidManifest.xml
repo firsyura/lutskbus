@@ -3,7 +3,9 @@
           package="com.example.maps"
           android:versionCode="1"
           android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="17"/>
+    <uses-sdk android:minSdkVersion="7"
+              android:targetSdkVersion="16"
+            />
 
     <permission
             android:name="com.example.maps.permission.MAPS_RECEIVE"
