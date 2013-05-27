@@ -2,6 +2,10 @@ package com.weblogic.lutskbus;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.*;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -123,22 +127,76 @@ public class MainActivity extends Activity {
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
                 .getMap();
 
-        // Move the camera instantly to hamburg with a zoom of 15.
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(Lutsk, 8));
 
-        // Zoom in, animating the camera.
-        map.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
+        // Acquire a reference to the system Location Manager
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                drawMarker(location);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            public void onProviderEnabled(String provider) {}
+
+            public void onProviderDisabled(String provider) {}
+        };
+
+
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        Location mapStartPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapStartPosition.getLatitude(),
+                mapStartPosition.getLongitude()), 16));
+
+        if (!isNetworkConnected())
+            Toast.makeText(MainActivity.this, R.string.need_internet, Toast.LENGTH_SHORT).show();
 
         starttime = System.currentTimeMillis();
         timer = new Timer();
         timer.schedule(new firstTask(), 0, 5000);
     }
 
+    private Marker myMarker;
+
+    private void drawMarker(Location location){
+
+        LatLng currentPosition = new LatLng(location.getLatitude(),
+                location.getLongitude());
+
+        if (myMarker != null) {
+            myMarker.setPosition(currentPosition);
+        } else {
+            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+            Bitmap bmp = Bitmap.createBitmap(80, 80, conf);
+            Canvas canvas1 = new Canvas(bmp);
+
+            // paint defines the text color,
+            // stroke width, size
+            Paint color = new Paint();
+            color.setTextSize(35);
+            color.setColor(Color.BLACK);
+
+            //modify canvas
+            canvas1.drawBitmap(BitmapFactory.decodeResource(getResources(),
+                    R.drawable.ic_launcher), 0,0, color);
+            canvas1.drawText("User Name!", 30, 40, color);
+
+            myMarker = map.addMarker(new MarkerOptions()
+                .position(currentPosition)
+                .title("Я")
+                .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+        }
+    }
+
     private boolean isNetworkConnected() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();
         if (ni == null) {
-            Toast.makeText(MainActivity.this, "You need internet connection!", Toast.LENGTH_SHORT).show();
             return false;
         } else
             return true;
