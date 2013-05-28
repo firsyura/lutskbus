@@ -3,6 +3,7 @@ package com.weblogic.lutskbus;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.*;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -171,25 +172,27 @@ public class MainActivity extends Activity {
         if (myMarker != null) {
             myMarker.setPosition(currentPosition);
         } else {
-            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-            Bitmap bmp = Bitmap.createBitmap(80, 80, conf);
-            Canvas canvas1 = new Canvas(bmp);
-
-            // paint defines the text color,
-            // stroke width, size
-            Paint color = new Paint();
-            color.setTextSize(35);
-            color.setColor(Color.BLACK);
-
-            //modify canvas
-            canvas1.drawBitmap(BitmapFactory.decodeResource(getResources(),
-                    R.drawable.ic_launcher), 0,0, color);
-            canvas1.drawText("User Name!", 30, 40, color);
+//            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+//            Bitmap bmp = Bitmap.createBitmap(100, 100, conf);
+//            Canvas canvas1 = new Canvas(bmp);
+//
+//            // paint defines the text color,
+//            // stroke width, size
+//            Paint color = new Paint();
+//            color.setTextSize(35);
+//            color.setColor(Color.BLACK);
+//
+//            //modify canvas
+//            Matrix matrix = new Matrix();
+//            matrix.setRotate(mRotation,source.getWidth()/2,source.getHeight()/2);
+//            canvas1.drawBitmap(BitmapFactory.decodeResource(getResources(),
+//                    R.drawable.pin), 0,0, color);
+//            canvas1.drawText("27А", 20, 50, color);
 
             myMarker = map.addMarker(new MarkerOptions()
                 .position(currentPosition)
-                .title("Я")
-                .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+                .icon(BitmapDescriptorFactory
+                        .fromResource(R.drawable.me)));
         }
     }
 
@@ -202,5 +205,17 @@ public class MainActivity extends Activity {
             return true;
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        timer.cancel();
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+        timer = new Timer();
+        timer.schedule(new firstTask(), 0, 5000);
+    }
 
 }
