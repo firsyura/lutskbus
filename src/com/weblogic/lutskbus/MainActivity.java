@@ -161,13 +161,17 @@ public class MainActivity extends Activity {
             public void onProviderDisabled(String provider) {}
         };
 
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+            Location mapStartPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-        Location mapStartPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapStartPosition.getLatitude(),
-                mapStartPosition.getLongitude()), 16));
+            if (mapStartPosition != null)
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapStartPosition.getLatitude(),
+                        mapStartPosition.getLongitude()), 16));
+        } else {
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(Weblogic, 16));
+        }
 
         if (!isNetworkConnected())
             Toast.makeText(MainActivity.this, R.string.need_internet, Toast.LENGTH_SHORT).show();
