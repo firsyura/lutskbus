@@ -15,14 +15,12 @@ import android.os.Bundle;
 import android.os.Message;
 import android.os.Handler;
 import android.os.Handler.Callback;
+import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.*;
 
 import java.util.*;
 
@@ -36,13 +34,15 @@ public class MainActivity extends Activity {
 
     long starttime = 0;
 
-    private LatLng Lutsk = new LatLng(50.747233, 25.325383);
+    private LatLng Weblogic = new LatLng(50.774831,25.366509);
 
     private static final String TAG_MARK = "mark";
     private static final String TAG_ID = "id";
     private static final String TAG_LAT = "lt";
     private static final String TAG_LNG = "ln";
     private static final String TAG_ROUTE = "r";
+    private static final String TAG_SPEED = "s";
+    private static final String TAG_SNUMBER = "sn";
 
     private Map<Integer, Marker> markers = new HashMap<Integer, Marker>();
 
@@ -82,14 +82,29 @@ public class MainActivity extends Activity {
                                 Double lat = c.getDouble(TAG_LAT);
                                 Double lng = c.getDouble(TAG_LNG);
                                 String route = c.getString(TAG_ROUTE);
+                                Integer speed = c.getInt(TAG_SPEED);
+                                String snumber = c.getString(TAG_SNUMBER);
                                 if (markers.get(id) != null) {
+                                    LatLng oldPosition = markers.get(id).getPosition();
+                                    double latR = oldPosition.latitude-lat;
+                                    double lngR = oldPosition.longitude-lng;
+
+                                    if (Math.abs(latR)>0.00009||Math.abs(lngR)>0.00009) {
+                                        Double way = bearing(oldPosition.latitude, oldPosition.longitude, lat, lng);
+                                        markers.get(id).setIcon(drawIcon(route, way));
+                                    } else {
+                                        if (speed==0)
+                                            markers.get(id).setIcon(drawIcon(route));
+                                    }
+
                                     markers.get(id).setPosition(new LatLng(lat, lng));
                                 } else {
+
                                     Marker marker = map.addMarker(new MarkerOptions()
                                             .position(new LatLng(lat, lng))
-                                            .title("Маршрут №"+route)
-                                            .icon(BitmapDescriptorFactory
-                                                    .fromResource(R.drawable.ic_launcher)));
+                                            .title(snumber)
+                                            .icon(drawIcon(route))
+                                            .anchor(0.5f, 0.5f));
                                     markers.put(id, marker);
                                 }
 
@@ -157,6 +172,11 @@ public class MainActivity extends Activity {
         if (!isNetworkConnected())
             Toast.makeText(MainActivity.this, R.string.need_internet, Toast.LENGTH_SHORT).show();
 
+        map.addMarker(new MarkerOptions()
+                .position(Weblogic)
+                .icon(BitmapDescriptorFactory
+                        .fromResource(R.drawable.weblogic)));
+
         starttime = System.currentTimeMillis();
         timer = new Timer();
         timer.schedule(new firstTask(), 0, 5000);
@@ -172,23 +192,6 @@ public class MainActivity extends Activity {
         if (myMarker != null) {
             myMarker.setPosition(currentPosition);
         } else {
-//            Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-//            Bitmap bmp = Bitmap.createBitmap(100, 100, conf);
-//            Canvas canvas1 = new Canvas(bmp);
-//
-//            // paint defines the text color,
-//            // stroke width, size
-//            Paint color = new Paint();
-//            color.setTextSize(35);
-//            color.setColor(Color.BLACK);
-//
-//            //modify canvas
-//            Matrix matrix = new Matrix();
-//            matrix.setRotate(mRotation,source.getWidth()/2,source.getHeight()/2);
-//            canvas1.drawBitmap(BitmapFactory.decodeResource(getResources(),
-//                    R.drawable.pin), 0,0, color);
-//            canvas1.drawText("27А", 20, 50, color);
-
             myMarker = map.addMarker(new MarkerOptions()
                 .position(currentPosition)
                 .icon(BitmapDescriptorFactory
@@ -216,6 +219,67 @@ public class MainActivity extends Activity {
         super.onRestart();
         timer = new Timer();
         timer.schedule(new firstTask(), 0, 5000);
+    }
+
+    protected static double bearing(double lat1, double lon1, double lat2, double lon2) {
+        double longDiff= lon2-lon1;
+        double y= Math.sin(longDiff)*Math.cos(lat2);
+        double x=Math.cos(lat1)*Math.sin(lat2)-   Math.sin(lat1)*Math.cos(lat2)*Math.cos(longDiff);
+
+        return (Math.toDegrees(Math.atan2(y, x))+360)%360;
+    }
+
+    protected BitmapDescriptor drawIcon(String text, Double way) {
+        Integer picture = R.drawable.stop;
+
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap bmp = Bitmap.createBitmap(134, 134, conf);
+        Canvas canvas = new Canvas(bmp);
+
+        // paint defines the text color,
+        // stroke width, size
+        Paint mPaint = new Paint();
+        mPaint.setTextSize(26);
+        mPaint.setColor(Color.BLACK);
+        mPaint.setAntiAlias(true);
+        mPaint.setTypeface(Typeface.create(Typeface.SERIF,
+                Typeface.BOLD));
+
+        mPaint.setTextAlign(Paint.Align.LEFT);
+
+        Rect bounds = new Rect();
+        mPaint.getTextBounds(text, 0, text.length(), bounds);
+
+        if (way>0&&way<=22.5||way>337.5) {
+            picture = R.drawable.draw_0;
+        } else if (way>22.5&&way<=67.5) {
+            picture = R.drawable.draw_45;
+        } else if (way>67.5&&way<=112.5) {
+            picture = R.drawable.draw_90;
+        } else if (way>112.5&&way<=157.5) {
+            picture = R.drawable.draw_135;
+        } else if (way>157.5&&way<=202.5) {
+            picture = R.drawable.draw_180;
+        } else if (way>202.5&&way<=247.5) {
+            picture = R.drawable.draw_225;
+        } else if (way>247.5&&way<=292.5) {
+            picture = R.drawable.draw_225;
+        } else if (way>292.5&&way<=337.5) {
+            picture = R.drawable.draw_315;
+        }
+
+
+        canvas.drawBitmap(BitmapFactory.decodeResource(getResources(),
+                picture), 0,0, mPaint);
+        Integer totalS = 134/2-(bounds.right-bounds.left)/2;
+        canvas.drawText(text, totalS, 134/2+(bounds.bottom-bounds.top)/2, mPaint);
+
+        return BitmapDescriptorFactory.fromBitmap(bmp);
+    }
+
+    protected BitmapDescriptor drawIcon(String text)
+    {
+        return drawIcon(text, -1.0);
     }
 
 }

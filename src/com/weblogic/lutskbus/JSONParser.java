@@ -6,6 +6,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,6 +30,10 @@ public class JSONParser {
         try {
             // defaultHttpClient
             HttpClient httpClient = AppHttpClient.INSTANCE.getConfiguredHttpClient();
+
+            HttpParams params = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(params, 2000);
+            HttpConnectionParams.setSoTimeout(params, 2000);
 
             HttpGet httpGet = new HttpGet(url);
 

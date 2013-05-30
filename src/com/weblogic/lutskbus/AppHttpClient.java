@@ -17,8 +17,8 @@ public enum AppHttpClient {
         if (configuredHttpClient == null) {
             try {
                 HttpParams params = new BasicHttpParams();
-                HttpConnectionParams.setConnectionTimeout(params, 5000);
-                HttpConnectionParams.setSoTimeout(params, 5000);
+                HttpConnectionParams.setConnectionTimeout(params, 10000);
+                HttpConnectionParams.setSoTimeout(params, 10000);
                 configuredHttpClient = new DefaultHttpClient(params);
 
                 HttpGet httpGetguest = new HttpGet("http://mak.lutsk.ua/guest");
