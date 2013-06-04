@@ -1,9 +1,7 @@
 package com.weblogic.lutskbus;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.*;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,12 +13,12 @@ import android.os.Bundle;
 import android.os.Message;
 import android.os.Handler;
 import android.os.Handler.Callback;
-import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.*;
+import android.support.v4.app.FragmentActivity;
 
 import java.util.*;
 
@@ -28,7 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 
     private GoogleMap map;
 
