@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Луцьк - Маршрутні таксі</string>
     <string name="need_internet">Інтернет з’єднання відсутнє</string>
+    <string name="need_maps">Потрібно встановити Google Maps!</string>
 </resources>

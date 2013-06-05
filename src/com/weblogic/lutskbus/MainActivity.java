@@ -1,6 +1,8 @@
 package com.weblogic.lutskbus;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.*;
 import android.location.Location;
 import android.location.LocationListener;
@@ -16,7 +18,7 @@ import android.os.Handler.Callback;
 import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.*;
 import android.support.v4.app.FragmentActivity;
 
@@ -138,50 +140,53 @@ public class MainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
+        map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMap();
 
+        if (isGoogleMapsInstalled()) {
+            // Acquire a reference to the system Location Manager
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        // Acquire a reference to the system Location Manager
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            // Define a listener that responds to location updates
+            LocationListener locationListener = new LocationListener() {
+                public void onLocationChanged(Location location) {
+                    // Called when a new location is found by the network location provider.
+                    drawMarker(location);
+                }
 
-        // Define a listener that responds to location updates
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                // Called when a new location is found by the network location provider.
-                drawMarker(location);
+                public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+                public void onProviderEnabled(String provider) {}
+
+                public void onProviderDisabled(String provider) {}
+            };
+
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+                Location mapStartPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                if (mapStartPosition != null)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapStartPosition.getLatitude(),
+                            mapStartPosition.getLongitude()), 16));
+            } else {
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(Weblogic, 16));
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            if (!isNetworkConnected())
+                Toast.makeText(MainActivity.this, R.string.need_internet, Toast.LENGTH_SHORT).show();
 
-            public void onProviderEnabled(String provider) {}
+            map.addMarker(new MarkerOptions()
+                    .position(Weblogic)
+                    .icon(BitmapDescriptorFactory
+                            .fromResource(R.drawable.weblogic)));
 
-            public void onProviderDisabled(String provider) {}
-        };
-
-        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-
-            Location mapStartPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-            if (mapStartPosition != null)
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapStartPosition.getLatitude(),
-                        mapStartPosition.getLongitude()), 16));
+            starttime = System.currentTimeMillis();
+            timer = new Timer();
+            timer.schedule(new firstTask(), 0, 5000);
         } else {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(Weblogic, 16));
+            Toast.makeText(MainActivity.this, R.string.need_maps, Toast.LENGTH_SHORT).show();
         }
-
-        if (!isNetworkConnected())
-            Toast.makeText(MainActivity.this, R.string.need_internet, Toast.LENGTH_SHORT).show();
-
-        map.addMarker(new MarkerOptions()
-                .position(Weblogic)
-                .icon(BitmapDescriptorFactory
-                        .fromResource(R.drawable.weblogic)));
-
-        starttime = System.currentTimeMillis();
-        timer = new Timer();
-        timer.schedule(new firstTask(), 0, 5000);
     }
 
     private Marker myMarker;
@@ -282,6 +287,19 @@ public class MainActivity extends FragmentActivity {
     protected BitmapDescriptor drawIcon(String text)
     {
         return drawIcon(text, -1.0);
+    }
+
+    public boolean isGoogleMapsInstalled()
+    {
+        try
+        {
+            ApplicationInfo info = getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0 );
+            return true;
+        }
+        catch(PackageManager.NameNotFoundException e)
+        {
+            return false;
+        }
     }
 
 }
